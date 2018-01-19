@@ -31,6 +31,8 @@ class ImageFigure extends React.Component{
 			this.props.inverse();
 			//for IE compatability of flip animation
 			setTimeout(function(){this.back.classList.toggle('hidden')}.bind(this), 300);
+			//setTimeout(function(){this.props.toggleHidden();}.bind(this), 300);
+
 		}else {
 			this.props.center();
 		}
@@ -51,6 +53,10 @@ class ImageFigure extends React.Component{
 		//check if is inversed
 		var className = "img-figure";
 		className += this.props.arrange.isInverse ? ' is-inverse' : '';
+
+		//for img-back style
+		var backClassName = "img-back hidden";
+		//backClassName += this.props.arrange.backHidden ? ' hidden' : '';
 
 		if(this.props.arrange.rotate){
 			//for compatibility
@@ -75,7 +81,7 @@ class ImageFigure extends React.Component{
 						</h2>
 						
 					</figcaption>
-					<div className="img-back hidden" ref={(el) => this.back = el}>
+					<div className={backClassName} ref={(el) => this.back = el}>
 						<p>
 							{this.props.data.title}
 						</p>
@@ -93,11 +99,42 @@ class ControllerUnit extends React.Component {
 
 	constructor(props) {
 		super(props);
+
+		this.handleClick = this.handleClick.bind(this);
+
+
+	}
+
+
+	handleClick(e){
+
+		if(this.props.arrange.isCenter) {
+			this.props.inverse();
+			//for IE compatability of flip animation
+			setTimeout(function(){this.props.domRef.getElementsByClassName('img-back')[0].classList.toggle('hidden')}.bind(this), 300);
+			//this.props.toggleHidden();
+
+		} else{
+			this.props.center();
+		}
+
+		e.stopPropagation();
+		e.preventDefault();
+
 	}
 
 	render() {
+
+ 		var className = 'unit';
+		if(this.props.arrange.isCenter) {
+			className += ' button-center';
+		}
+		if(this.props.arrange.isInverse) {
+			className += ' button-inverse';
+		}
+
 		
-		return <div className="unit"></div>
+		return <div className={className} onClick={this.handleClick}></div>
 				
 	}
 
@@ -140,11 +177,27 @@ class AppComponent extends React.Component {
 				topY: [0, 0]
 
 			}
-		}
+		};
 
 		this.rearrange = this.rearrange.bind(this);
 		this.inverse = this.inverse.bind(this);
+		this.center = this.center.bind(this);
+		this.toggleHidden = this.toggleHidden.bind(this);
 
+	}
+
+	toggleHidden(index){
+
+		return function() {
+			var imgsArrangeArr = this.state.imgsArrangeArr;
+			imgsArrangeArr[index].backHidden = !imgsArrangeArr[index].backHidden;
+			setTimeout(function(){
+				this.setState({
+					imgsArrangeArr: imgsArrangeArr
+				});
+			}.bind(this), 300);
+
+		}.bind(this);
 	}
 
 	//relocation all the pics
@@ -185,7 +238,8 @@ class AppComponent extends React.Component {
 					left: generateRandom(vPosRangeX[0], vPosRangeX[1])
 				},
 				isCenter: false,
-				isInverse: false
+				isInverse: false,
+				backHidden: true
 			}
 		});
 
@@ -208,7 +262,8 @@ class AppComponent extends React.Component {
 						top: generateRandom(hPosRangeY[0], hPosRangeY[1])
 					},
 				isInverse: false,
-				isCenter: false
+				isCenter: false,
+				backHidden: true
 			}
 		}
 
@@ -312,13 +367,14 @@ class AppComponent extends React.Component {
   					},
   					rotate: 0,
   					isInverse: false,
-  					isCenter: false
+  					isCenter: false,
+  					backHidden: true
   				};
   			}
 
-  			imgFigures.push(<ImageFigure data={single} arrange={this.state.imgsArrangeArr[index]} inverse={this.inverse(index)} center={this.center(index)} key={index} refPass={(el) => {this['img' + index] = el;}} />);
+  			imgFigures.push(<ImageFigure data={single} arrange={this.state.imgsArrangeArr[index]} inverse={this.inverse(index)} center={this.center(index)} toggleHidden={this.toggleHidden(index)} key={index} refPass={(el) => {this['img' + index] = el;}} />);
 
-  			controllerUnits.push(<ControllerUnit key={index} />);
+  			controllerUnits.push(<ControllerUnit key={index} center={this.center(index)} inverse={this.inverse(index)} arrange={this.state.imgsArrangeArr[index]} toggleHidden={this.toggleHidden(index)} domRef={this['img' + index]} />);
   		}.bind(this));        //need to bind this for function inside forEach!!
 
 
